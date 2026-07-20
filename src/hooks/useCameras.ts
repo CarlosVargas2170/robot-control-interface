@@ -27,11 +27,22 @@ export function useCameras(backendUrl: string) {
       return;
     }
 
-    // ── Real mode: fetch from the Jetson backend ───────────────────────────
+    // ── Real mode: fetch from the Jetson/Flask backend ─────────────────────
     try {
       const res = await fetch(`${backendUrl}/api/cameras`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: CameraInfo[] = await res.json();
+
+      // Flask returns:  [{id: 0, nombre: "Camera 0"}, ...]
+      // We normalise to: {id: "cam_0", name: "CAM 0", device: "/dev/video0"}
+      type FlaskCamera = { id: number; nombre: string };
+      const raw: FlaskCamera[] = await res.json();
+
+      const data: CameraInfo[] = raw.map((item) => ({
+        id: `cam_${item.id}`,
+        name: (item.nombre || `CAM ${item.id}`).toUpperCase(),
+        device: `/dev/video${item.id}`,
+      }));
+
       setCameras(data);
       setError(null);
     } catch (err) {
