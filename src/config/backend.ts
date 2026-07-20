@@ -6,7 +6,7 @@ import type { CameraInfo } from "../types/camera";
  * Centralised backend URL — change this single constant to point anywhere
  * (local dev, staging, or the real Jetson).
  */
-export const BACKEND_URL = "http://192.168.1.100:8000";
+export const BACKEND_URL = "http://localhost:5000";
 
 /**
  * Enable mock mode to develop the UI without a running backend.
