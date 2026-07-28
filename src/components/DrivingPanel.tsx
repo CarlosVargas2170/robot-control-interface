@@ -201,18 +201,6 @@ function StatusItem({ label, value, connected, warn }: { label: string; value: s
   );
 }
 
-function KeyButton({ label, active, disabled }: { label: string; active: boolean; disabled: boolean }) {
-  return (
-    <div className={`w-12 h-12 flex items-center justify-center rounded-lg border-2 text-lg font-bold transition-all ${
-      active
-        ? "bg-[#58a6ff]/60 border-[#58a6ff] text-white scale-95"
-        : "bg-[#55595e]/40 border-[#bababa]/30 text-white opacity-80"
-    } ${disabled ? "opacity-40" : ""}`}>
-      {label}
-    </div>
-  );
-}
-
 function StatusRow({ label, value, warn, mono }: { label: string; value: string; warn?: boolean; mono?: boolean }) {
   return (
     <div className="flex justify-between items-center px-3 py-2 border-b border-[#30363d]/25 last:border-b-0">

@@ -40,7 +40,7 @@ class SocketService {
 
     for (const event of events) {
       this.socket.on(event, (...args: any[]) => {
-        console.log(`[Socket RX] ${event}`, args.length === 1 ? args[0] : args);
+        // console.log(`[Socket RX] ${event}`, args.length === 1 ? args[0] : args);
         const handlers = this.listeners.get(event);
         if (handlers) {
           handlers.forEach((handler) => handler(...args));
@@ -143,7 +143,7 @@ class SocketService {
 
   /** Envía un input de control (teclas + velocidad) */
   sendControlInput(input: ControlInput) {
-    console.log("[Socket TX] control_input", input);
+    // console.log("[Socket TX] control_input", input);
     this.socket?.emit("control_input", input);
   }
 
@@ -167,7 +167,7 @@ class SocketService {
 
   /** Solicita el estado actual del robot */
   requestStatus() {
-    console.log("[Socket TX] status_request");
+    // console.log("[Socket TX] status_request");
     this.socket?.emit("status_request");
   }
 

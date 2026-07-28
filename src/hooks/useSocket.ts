@@ -93,7 +93,7 @@ export function useSocket(): UseSocketReturn {
 
     // Listener de estado del robot
     const handleStatus = (newStatus: RobotStatus) => {
-      console.log("[useSocket] Status received:", newStatus);
+      // console.log("[useSocket] Status received:", newStatus);
       setStatus(newStatus);
     };
     socketService.on("status", handleStatus);

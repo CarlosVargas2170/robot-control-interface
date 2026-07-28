@@ -27,6 +27,10 @@ export function useKeyboard(enabled = true) {
     (pressed: boolean) =>
       (e: KeyboardEvent) => {
         if (!enabled) return;
+        // Ignorar eventos repetidos: el sistema operativo los genera
+        // al mantener la tecla presionada y causan re-renders innecesarios
+        // que destruyen el intervalo del heartbeat de control.
+        if (e.repeat) return;
         const k = e.key.toLowerCase();
         if (k in EMPTY) {
           e.preventDefault();

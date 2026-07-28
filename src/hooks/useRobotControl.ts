@@ -59,9 +59,16 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
   const [speed, setSpeed] = useState(20);
   const [controlError, setControlError] = useState<string | null>(null);
   const sequenceRef = useRef(0);
+  // Refs para el heartbeat: evitan recrear el intervalo cuando cambian keys/speed
+  const keysRef = useRef(keys);
+  const speedRef = useRef(speed);
 
   // Determinar si puede conducir
   const canDrive = hasControl && status.robot_mode === "TELEDIRIGIDO";
+
+  // Mantener refs sincronizados con el estado (sin causar re-renders)
+  keysRef.current = keys;
+  speedRef.current = speed;
 
   // ─── Listeners de control ────────────────────────────────────────────────
 
@@ -95,26 +102,23 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
   }, []);
 
   // ─── Heartbeat de control (50ms) ─────────────────────────────────────────
-
+  // Usa refs para keys/speed y solo depende de hasControl.
+  // Así el intervalo NO se destruye cuando cambian las teclas o la velocidad,
+  // evitando gaps en el envío de heartbeats que causan falsos timeouts.
   useEffect(() => {
     if (MOCK_MODE || !hasControl) return;
-
-    console.log("[useRobotControl] Heartbeat started (50ms interval)");
 
     const interval = setInterval(() => {
       sequenceRef.current += 1;
       socketService.sendControlInput({
-        keys,
-        speed,
+        keys: keysRef.current,
+        speed: speedRef.current,
         sequence: sequenceRef.current,
       });
     }, 50);
 
-    return () => {
-      console.log("[useRobotControl] Heartbeat stopped");
-      clearInterval(interval);
-    };
-  }, [hasControl, keys, speed]);
+    return () => clearInterval(interval);
+  }, [hasControl]);
 
   // ─── Acciones ────────────────────────────────────────────────────────────
 
