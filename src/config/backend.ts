@@ -5,8 +5,10 @@ import type { CameraInfo } from "../types/camera";
 /**
  * Centralised backend URL — change this single constant to point anywhere
  * (local dev, staging, or the real Jetson).
+ * 
+ * Se puede configurar con la variable de entorno VITE_BACKEND_URL
  */
-export const BACKEND_URL = "http://localhost:5000";
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 /**
  * Enable mock mode to develop the UI without a running backend.
@@ -14,10 +16,14 @@ export const BACKEND_URL = "http://localhost:5000";
  * When `true`:
  *  - `useCameras` returns fake camera data immediately (no HTTP calls).
  *  - A canvas‑based mock video stream is shown in every `Camera` widget.
+ *  - Socket.IO no se conecta al backend.
  *
  * Set to `false` before connecting to the real Jetson.
+ * 
+ * Se puede configurar con la variable de entorno VITE_MOCK_MODE
  */
-export const MOCK_MODE = true;
+export const MOCK_MODE = import.meta.env.VITE_MOCK_MODE === "true" || 
+                         import.meta.env.VITE_MOCK_MODE === undefined;
 
 /**
  * Fake cameras used when `MOCK_MODE === true`.
