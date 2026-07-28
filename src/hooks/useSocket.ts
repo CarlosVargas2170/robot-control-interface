@@ -73,6 +73,7 @@ export function useSocket(): UseSocketReturn {
 
     // Listeners de conexión
     const handleConnect = () => {
+      console.log("[useSocket] Connected to backend");
       setIsConnected(true);
       setConnectionError(null);
       // Solicitar estado inicial
@@ -80,6 +81,7 @@ export function useSocket(): UseSocketReturn {
     };
 
     const handleDisconnect = (reason: string) => {
+      console.log("[useSocket] Disconnected:", reason);
       setIsConnected(false);
       if (reason === "io server disconnect") {
         setConnectionError("Desconectado por el servidor");
@@ -91,12 +93,14 @@ export function useSocket(): UseSocketReturn {
 
     // Listener de estado del robot
     const handleStatus = (newStatus: RobotStatus) => {
+      console.log("[useSocket] Status received:", newStatus);
       setStatus(newStatus);
     };
     socketService.on("status", handleStatus);
 
     // Listener de log serial
     const handleSerialLog = (payload: { line: string }) => {
+      console.log("[useSocket] Serial log:", payload.line);
       logCounterRef.current += 1;
       setSerialLog((prev) => {
         const next = [...prev, payload.line];
@@ -114,6 +118,7 @@ export function useSocket(): UseSocketReturn {
     }, 500);
 
     return () => {
+      console.log("[useSocket] Cleanup: disconnecting from backend");
       clearInterval(statusInterval);
       socketService.offConnect(handleConnect);
       socketService.offDisconnect(handleDisconnect);

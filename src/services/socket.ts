@@ -12,8 +12,11 @@ class SocketService {
   connect(url: string) {
     if (this.socket?.connected) return;
 
+    console.log("[Socket] Connecting to:", url);
+
     // Desconectar socket anterior si existe
     if (this.socket) {
+      console.log("[Socket] Disconnecting previous socket");
       this.socket.removeAllListeners();
       this.socket.disconnect();
     }
@@ -37,6 +40,7 @@ class SocketService {
 
     for (const event of events) {
       this.socket.on(event, (...args: any[]) => {
+        console.log(`[Socket RX] ${event}`, args.length === 1 ? args[0] : args);
         const handlers = this.listeners.get(event);
         if (handlers) {
           handlers.forEach((handler) => handler(...args));
@@ -65,6 +69,7 @@ class SocketService {
   /** Desconecta del backend */
   disconnect() {
     if (this.socket) {
+      console.log("[Socket] Disconnecting");
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
@@ -75,6 +80,7 @@ class SocketService {
   /** Registra un listener para un evento del backend */
   on<K extends keyof BackendEvents>(event: K, handler: BackendEvents[K]) {
     const key = event as string;
+    console.log(`[Socket] Registering listener for: ${key}`);
     if (!this.listeners.has(key)) {
       this.listeners.set(key, new Set());
     }
@@ -89,6 +95,7 @@ class SocketService {
   /** Remueve un listener */
   off<K extends keyof BackendEvents>(event: K, handler: BackendEvents[K]) {
     const key = event as string;
+    console.log(`[Socket] Removing listener for: ${key}`);
     this.listeners.get(key)?.delete(handler);
     if (this.socket) {
       this.socket.off(event, handler as any);
@@ -124,36 +131,43 @@ class SocketService {
 
   /** Solicita tomar el control del robot */
   claimControl() {
+    console.log("[Socket TX] claim_control");
     this.socket?.emit("claim_control");
   }
 
   /** Libera el control del robot */
   releaseControl() {
+    console.log("[Socket TX] release_control");
     this.socket?.emit("release_control");
   }
 
   /** Envía un input de control (teclas + velocidad) */
   sendControlInput(input: ControlInput) {
+    console.log("[Socket TX] control_input", input);
     this.socket?.emit("control_input", input);
   }
 
   /** Envía parada de emergencia */
   emergencyStop() {
+    console.log("[Socket TX] emergency_stop");
     this.socket?.emit("emergency_stop");
   }
 
   /** Cambia al siguiente modo del robot */
   cycleMode() {
+    console.log("[Socket TX] cycle_mode");
     this.socket?.emit("cycle_mode");
   }
 
   /** Envía un comando serial directo (con whitelist) */
   sendSerialCommand(command: string) {
+    console.log("[Socket TX] serial_command", { command });
     this.socket?.emit("serial_command", { command });
   }
 
   /** Solicita el estado actual del robot */
   requestStatus() {
+    console.log("[Socket TX] status_request");
     this.socket?.emit("status_request");
   }
 

@@ -69,6 +69,7 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
     if (MOCK_MODE) return;
 
     const handleControlGranted = () => {
+      console.log("[useRobotControl] Control granted");
       setHasControl(true);
       setControlError(null);
       sequenceRef.current = 0;
@@ -77,6 +78,7 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
     };
 
     const handleControlDenied = (payload: { reason: string }) => {
+      console.log("[useRobotControl] Control denied:", payload.reason);
       setHasControl(false);
       setControlError(payload.reason);
       // Limpiar el error después de 3 segundos
@@ -97,6 +99,8 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
   useEffect(() => {
     if (MOCK_MODE || !hasControl) return;
 
+    console.log("[useRobotControl] Heartbeat started (50ms interval)");
+
     const interval = setInterval(() => {
       sequenceRef.current += 1;
       socketService.sendControlInput({
@@ -106,40 +110,50 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
       });
     }, 50);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log("[useRobotControl] Heartbeat stopped");
+      clearInterval(interval);
+    };
   }, [hasControl, keys, speed]);
 
   // ─── Acciones ────────────────────────────────────────────────────────────
 
   const updateKey = useCallback((key: keyof MotionKeys, pressed: boolean) => {
+    console.log(`[useRobotControl] Key ${key}: ${pressed ? "PRESSED" : "RELEASED"}`);
     setKeys((prev) => ({ ...prev, [key]: pressed }));
   }, []);
 
   const clearKeys = useCallback(() => {
+    console.log("[useRobotControl] Clear all keys");
     setKeys({ w: false, a: false, s: false, d: false });
   }, []);
 
   const claimControl = useCallback(() => {
     if (MOCK_MODE) {
+      console.log("[useRobotControl] Claim control (mock)");
       setHasControl(true);
       return;
     }
+    console.log("[useRobotControl] Claiming control...");
     setControlError(null);
     socketService.claimControl();
   }, []);
 
   const releaseControl = useCallback(() => {
     if (MOCK_MODE) {
+      console.log("[useRobotControl] Release control (mock)");
       setHasControl(false);
       clearKeys();
       return;
     }
+    console.log("[useRobotControl] Releasing control...");
     clearKeys();
     socketService.releaseControl();
     setHasControl(false);
   }, [clearKeys]);
 
   const emergencyStop = useCallback(() => {
+    console.log("[useRobotControl] EMERGENCY STOP");
     clearKeys();
     if (!MOCK_MODE) {
       socketService.emergencyStop();
@@ -147,6 +161,7 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
   }, [clearKeys]);
 
   const cycleMode = useCallback(() => {
+    console.log("[useRobotControl] Cycle mode");
     clearKeys();
     if (!MOCK_MODE) {
       socketService.cycleMode();
@@ -155,6 +170,7 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
 
   const sendSerialCommand = useCallback((command: string) => {
     if (!MOCK_MODE && hasControl) {
+      console.log("[useRobotControl] Send serial command:", command);
       socketService.sendSerialCommand(command);
     }
   }, [hasControl]);
@@ -164,6 +180,7 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
   useEffect(() => {
     return () => {
       if (hasControl && !MOCK_MODE) {
+        console.log("[useRobotControl] Cleanup: releasing control on unmount");
         socketService.releaseControl();
       }
     };
