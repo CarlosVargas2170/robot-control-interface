@@ -49,10 +49,10 @@ function StatusPill({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-[7px] min-h-[30px] px-[10px] py-[5px] border rounded text-xs font-semibold text-[#c6cdd0]"
+      className="inline-flex items-center gap-1.75 min-h-7.5 px-2.5 py-1.25 border rounded text-xs font-semibold text-[#c6cdd0]"
       style={{ borderColor, background: bg }}
     >
-      <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: dotColor }} />
+      <span className="w-1.75 h-1.75 rounded-full shrink-0" style={{ background: dotColor }} />
       {children}
     </span>
   );

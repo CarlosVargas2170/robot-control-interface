@@ -67,7 +67,7 @@ export function useSocket(): UseSocketReturn {
       setIsConnected(true);
       return;
     }
-
+    
     // Conectar al backend
     socketService.connect(BACKEND_URL);
 
