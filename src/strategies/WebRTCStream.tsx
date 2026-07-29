@@ -1,34 +1,75 @@
-// ─── WebRTC Strategy (Phase 2 — stub) ────────────────────────────────────────
+// ─── WebRTC Strategy (MediaMTX WHEP) ─────────────────────────────────────────
 
+import { useEffect, useRef } from "react";
 import { type VideoStreamStrategyProps } from "./types";
+import { MEDIAMTX_URL, MEDIAMTX_CAMERAS } from "../config/backend";
+import { connectWhep } from "../services/mediamtxWhep";
 
 /**
- * **Phase 2 — WebRTC video stream** (placeholder).
+ * Stream individual vía **WebRTC WHEP** contra MediaMTX.
  *
- * When implemented, this will use the native `RTCPeerConnection` API +
- * a signalling handshake (`POST /offer`) to establish a low-latency,
- * bandwidth-efficient peer-to-peer video connection with the Jetson
- * backend.
+ * Resuelve el path así:
+ *  1. `streamPath` del catálogo MEDIAMTX_CAMERAS (id → streamPath)
+ *  2. fallback: cameraId sin prefijo "cam_"  (cam_0 → "0" no es ideal;
+ *     mejor definir streamPath en config)
  *
- * **Trade-off:**  50-150 ms latency  ·  efficient bandwidth  ·  complex setup
+ * URL: `{MEDIAMTX_URL}/{streamPath}/whep`
  *
- * @example
- * ```tsx
- * // Swap one line to migrate:
- * <Camera strategy={WebRTCStream} cameraId="cam_0" ... />
- * ```
+ * **Trade-off:** baja latencia · un stream por cámara · requiere paths
+ * individuales publicados en MediaMTX (ver jetson/camera_pipeline.py).
  */
 export default function WebRTCStream({
-  cameraId: _cameraId,
+  cameraId,
   backendUrl: _backendUrl,
-  className: _className,
+  className = "block h-full w-full rounded-md object-cover",
   onStatusChange,
 }: VideoStreamStrategyProps) {
-  // TODO Phase 2: implement RTCPeerConnection + signalling
-  onStatusChange?.(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const meta = MEDIAMTX_CAMERAS.find((c) => c.id === cameraId);
+  const streamPath =
+    meta?.streamPath ?? cameraId.replace(/^cam_/, "cam");
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const abort = new AbortController();
+    let pc: RTCPeerConnection | null = null;
+
+    (async () => {
+      try {
+        console.log(`[WebRTC] ${cameraId} → ${MEDIAMTX_URL}/${streamPath}/whep`);
+        const conn = await connectWhep(MEDIAMTX_URL, streamPath, abort.signal);
+        pc = conn.pc;
+        video.srcObject = conn.stream;
+        await video.play().catch(() => undefined);
+        onStatusChange?.(true);
+        console.log(`[WebRTC] ${cameraId} conectado`);
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        console.warn(`[WebRTC] ${cameraId}`, err);
+        onStatusChange?.(false);
+      }
+    })();
+
+    return () => {
+      abort.abort();
+      if (video) {
+        video.pause();
+        video.srcObject = null;
+      }
+      pc?.close();
+    };
+  }, [cameraId, streamPath, onStatusChange]);
+
   return (
-    <div className="flex h-full w-full items-center justify-center bg-[#161b22] text-sm text-[#555]">
-      WebRTC — pendiente de implementar
-    </div>
+    <video
+      ref={videoRef}
+      className={className}
+      muted
+      playsInline
+      autoPlay
+    />
   );
 }

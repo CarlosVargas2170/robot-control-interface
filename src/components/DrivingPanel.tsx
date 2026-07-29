@@ -133,7 +133,7 @@ export function DrivingPanel({
             </button>
             <button
               onClick={onEmergencyStop}
-              className="w-full bg-gradient-to-br from-[#b62324] to-[#d23f4a] text-white border border-[#ff5050]/50 rounded-[10px] py-3 cursor-pointer text-center shadow-[0_4px_12px_rgba(218,54,51,0.3)] transition-all hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(218,54,51,0.4)] active:translate-y-0"
+              className="w-full bg-linear-to-br from-[#b62324] to-[#d23f4a] text-white border border-[#ff5050]/50 rounded-[10px] py-3 cursor-pointer text-center shadow-[0_4px_12px_rgba(218,54,51,0.3)] transition-all hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(218,54,51,0.4)] active:translate-y-0"
             >
               <strong className="block text-sm tracking-wide font-bold">EMERGENCY STOP</strong>
               <span className="block text-[11px] opacity-90 mt-0.5">Detener inmediatamente</span>
@@ -187,8 +187,8 @@ function Section({ children }: { children: React.ReactNode }) {
 
 function StatusItem({ label, value, connected, warn }: { label: string; value: string; connected: boolean; warn?: boolean }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-[#30363d]/25 border border-[#30363d]/40 rounded-lg text-xs flex-1 min-w-[130px]">
-      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+    <div className="flex items-center gap-2 px-3 py-2 bg-[#30363d]/25 border border-[#30363d]/40 rounded-lg text-xs flex-1 min-w-32.5">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${
         warn 
           ? "bg-[#d29922] shadow-[0_0_6px_rgba(210,153,34,0.6)]" 
           : connected 

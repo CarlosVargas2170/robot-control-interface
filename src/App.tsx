@@ -8,10 +8,37 @@ import { useCameras } from "./hooks/useCameras";
 import { useSocket } from "./hooks/useSocket";
 import { useRobotControl } from "./hooks/useRobotControl";
 import { useKeyboard } from "./hooks/useKeyboard";
-import { BACKEND_URL, MOCK_MODE } from "./config/backend";
-import { MockStream } from "./strategies";
+import {
+  BACKEND_URL,
+  MOCK_MODE,
+  VIDEO_STRATEGY,
+} from "./config/backend";
+import {
+  MockStream,
+  MJPEGStream,
+  WebRTCStream,
+  CompositeCropStream,
+} from "./strategies";
 import { WASDKeys } from "./strategies/graphs";
 import type { GraphType } from "./types/graph";
+import type { ComponentType } from "react";
+import type { VideoStreamStrategyProps } from "./strategies";
+
+/** Resuelve la strategy de video según config (mock / mjpeg / webrtc / crop). */
+function resolveVideoStrategy(): ComponentType<VideoStreamStrategyProps> {
+  if (MOCK_MODE) return MockStream;
+  switch (VIDEO_STRATEGY) {
+    case "webrtc":
+      return WebRTCStream;
+    case "composite-crop":
+      return CompositeCropStream;
+    case "mjpeg":
+    default:
+      return MJPEGStream;
+  }
+}
+
+const videoStrategy = resolveVideoStrategy();
 
 // ── Posiciones iniciales de overlays (idénticas al mockup) ──────────────────
 
@@ -116,7 +143,7 @@ function App() {
   const gridKey = visibleCameras.map((c) => c.id).join("|");
 
   return (
-    <div className={`relative h-screen w-screen overflow-y-auto bg-[#0d1117] transition-all duration-300 ${drivingPanel ? "pr-[480px]" : ""}`}>
+    <div className={`relative h-screen w-screen overflow-y-auto bg-[#0d1117] transition-all duration-300 ${drivingPanel ? "pr-120" : ""}`}>
       {/* ── Navbar fija superior ─────────────────────────────────────────── */}
       <Navbar
         status={status}
@@ -138,7 +165,7 @@ function App() {
         onEmergencyStop={emergencyStop}
       />
 
-      <div className="pt-[54px]">
+      <div className="pt-13.5">
 
       {loading && (
         <div className="flex h-full w-full items-center justify-center text-[#8b949e] text-sm">
@@ -158,25 +185,35 @@ function App() {
       {/* ── Camera grid ─────────────────────────────────────────────────── */}
       {!loading && visibleCameras.length > 0 && (
         <GridPanel key={gridKey} locked={!editMode}>
-          {visibleCameras.map((cam, i) => (
+          {visibleCameras.map((cam, i) => {
+              // Layout genérico N×M: usa cols/rows/position de la cámara
+              const cols = cam.cols ?? 2;
+              const rows = cam.rows ?? 2;
+              const pos = cam.position ?? cam.quadrant ?? i;
+              const gridCol = pos % cols;
+              const gridRow = Math.floor(pos / cols);
+              const w = 12 / cols;  // GridStack es 12 columnas
+              const h = 12 / rows;
+              return (
             <div
               key={cam.id}
               className="grid-stack-item"
-              gs-w="6"
-              gs-h="4"
-              gs-x={(i % 2) * 6}
-              gs-y={Math.floor(i / 2) * 4}
+              gs-w={w}
+              gs-h={h}
+              gs-x={gridCol * w}
+              gs-y={gridRow * h}
             >
               <div className="grid-stack-item-content">
                 <Camera
                   cameraId={cam.id}
                   name={cam.name}
                   backendUrl={BACKEND_URL}
-                  strategy={MOCK_MODE ? MockStream : undefined}
+                  strategy={videoStrategy}
                 />
               </div>
             </div>
-          ))}
+            );
+          })}
         </GridPanel>
       )}
 
