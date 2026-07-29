@@ -62,7 +62,7 @@ export function Navbar({
   const hasActions = !!(onClaimControl || onReleaseControl || onEmergencyStop);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[1100] min-h-[54px] flex items-center justify-between px-4 py-2 border-b border-[#30363d] bg-[#0d1117]/80 backdrop-blur-md">
+    <nav className="fixed top-0 left-0 right-0 z-1100 min-h-13.5 flex items-center justify-between px-4 py-2 border-b border-[#30363d] bg-[#0d1117]/80 backdrop-blur-md">
       {/* ── Left: brand ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 min-w-0">
         <button
@@ -128,7 +128,7 @@ export function Navbar({
 
       {/* ── Mobile menu ──────────────────────────────────────────────────── */}
       {menuOpen && (
-        <div className="absolute top-[54px] left-0 right-0 bg-[#161b22] border-b border-[#30363d] shadow-lg lg:hidden z-[1100]">
+        <div className="absolute top-13.5 left-0 right-0 bg-[#161b22] border-b border-[#30363d] shadow-lg lg:hidden z-1100">
           <div className="px-4 py-3">
             <NavbarStatusPills
               isConnected={isConnected}

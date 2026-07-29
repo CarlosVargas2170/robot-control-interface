@@ -143,7 +143,7 @@ function App() {
   const gridKey = visibleCameras.map((c) => c.id).join("|");
 
   return (
-    <div className={`relative h-screen w-screen overflow-y-auto bg-[#0d1117] transition-all duration-300 ${drivingPanel ? "pr-[480px]" : ""}`}>
+    <div className={`relative h-screen w-screen overflow-y-auto bg-[#0d1117] transition-all duration-300 ${drivingPanel ? "pr-120" : ""}`}>
       {/* ── Navbar fija superior ─────────────────────────────────────────── */}
       <Navbar
         status={status}
@@ -165,7 +165,7 @@ function App() {
         onEmergencyStop={emergencyStop}
       />
 
-      <div className="pt-[54px]">
+      <div className="pt-13.5">
 
       {loading && (
         <div className="flex h-full w-full items-center justify-center text-[#8b949e] text-sm">
