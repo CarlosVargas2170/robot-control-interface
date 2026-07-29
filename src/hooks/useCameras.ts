@@ -2,16 +2,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { CameraInfo } from "../types/camera";
-import { MOCK_MODE, MOCK_CAMERAS } from "../config/backend";
+import {
+  MOCK_MODE,
+  MOCK_CAMERAS,
+  CAMERA_SOURCE,
+  MEDIAMTX_CAMERAS,
+} from "../config/backend";
 
 /**
- * Fetches the list of available cameras from the backend.
+ * Fetches the list of available cameras.
  *
- * When `MOCK_MODE` is enabled in `config/backend.ts`, returns
- * hard‑coded fake cameras instantly — no HTTP calls, no polling.
- *
- * Polls every 30 s so newly plugged cameras are discovered
- * without a page reload (only when `MOCK_MODE === false`).
+ * - MOCK_MODE → MOCK_CAMERAS (sin red)
+ * - CAMERA_SOURCE === "mediamtx" → catálogo estático (MediaMTX / composite)
+ * - CAMERA_SOURCE === "api" → GET {backendUrl}/api/cameras + polling 30s
  */
 export function useCameras(backendUrl: string) {
   const [cameras, setCameras] = useState<CameraInfo[]>([]);
@@ -19,7 +22,7 @@ export function useCameras(backendUrl: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchCameras = useCallback(async () => {
-    // ── Mock mode: serve fake data immediately ────────────────────────────
+    // ── Mock mode ──────────────────────────────────────────────────────────
     if (MOCK_MODE) {
       setCameras(MOCK_CAMERAS);
       setLoading(false);
@@ -27,13 +30,20 @@ export function useCameras(backendUrl: string) {
       return;
     }
 
-    // ── Real mode: fetch from the Jetson/Flask backend ─────────────────────
+    // ── Catálogo estático MediaMTX / composite 2×2 ─────────────────────────
+    if (CAMERA_SOURCE === "mediamtx") {
+      setCameras(MEDIAMTX_CAMERAS);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    // ── API Flask/FastAPI ──────────────────────────────────────────────────
     try {
       const res = await fetch(`${backendUrl}/api/cameras`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       // Flask returns:  [{id: 0, nombre: "Camera 0"}, ...]
-      // We normalise to: {id: "cam_0", name: "CAM 0", device: "/dev/video0"}
       type FlaskCamera = { id: number; nombre: string };
       const raw: FlaskCamera[] = await res.json();
 
@@ -41,6 +51,8 @@ export function useCameras(backendUrl: string) {
         id: `cam_${item.id}`,
         name: (item.nombre || `CAM ${item.id}`).toUpperCase(),
         device: `/dev/video${item.id}`,
+        streamPath: `cam${item.id}`,
+        quadrant: (item.id % 4) as 0 | 1 | 2 | 3,
       }));
 
       setCameras(data);
@@ -56,7 +68,7 @@ export function useCameras(backendUrl: string) {
 
   useEffect(() => {
     fetchCameras();
-    if (MOCK_MODE) return; // No polling needed in mock mode
+    if (MOCK_MODE || CAMERA_SOURCE === "mediamtx") return;
     const interval = setInterval(fetchCameras, 30_000);
     return () => clearInterval(interval);
   }, [fetchCameras]);

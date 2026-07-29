@@ -8,10 +8,37 @@ import { useCameras } from "./hooks/useCameras";
 import { useSocket } from "./hooks/useSocket";
 import { useRobotControl } from "./hooks/useRobotControl";
 import { useKeyboard } from "./hooks/useKeyboard";
-import { BACKEND_URL, MOCK_MODE } from "./config/backend";
-import { MockStream } from "./strategies";
+import {
+  BACKEND_URL,
+  MOCK_MODE,
+  VIDEO_STRATEGY,
+} from "./config/backend";
+import {
+  MockStream,
+  MJPEGStream,
+  WebRTCStream,
+  CompositeCropStream,
+} from "./strategies";
 import { WASDKeys } from "./strategies/graphs";
 import type { GraphType } from "./types/graph";
+import type { ComponentType } from "react";
+import type { VideoStreamStrategyProps } from "./strategies";
+
+/** Resuelve la strategy de video según config (mock / mjpeg / webrtc / crop). */
+function resolveVideoStrategy(): ComponentType<VideoStreamStrategyProps> {
+  if (MOCK_MODE) return MockStream;
+  switch (VIDEO_STRATEGY) {
+    case "webrtc":
+      return WebRTCStream;
+    case "composite-crop":
+      return CompositeCropStream;
+    case "mjpeg":
+    default:
+      return MJPEGStream;
+  }
+}
+
+const videoStrategy = resolveVideoStrategy();
 
 // ── Posiciones iniciales de overlays (idénticas al mockup) ──────────────────
 
@@ -158,25 +185,29 @@ function App() {
       {/* ── Camera grid ─────────────────────────────────────────────────── */}
       {!loading && visibleCameras.length > 0 && (
         <GridPanel key={gridKey} locked={!editMode}>
-          {visibleCameras.map((cam, i) => (
+          {visibleCameras.map((cam, i) => {
+              // Usar quadrant si existe; si no, fallback al índice
+              const q = cam.quadrant ?? i;
+              return (
             <div
               key={cam.id}
               className="grid-stack-item"
               gs-w="6"
               gs-h="4"
-              gs-x={(i % 2) * 6}
-              gs-y={Math.floor(i / 2) * 4}
+              gs-x={(q % 2) * 6}
+              gs-y={Math.floor(q / 2) * 4}
             >
               <div className="grid-stack-item-content">
                 <Camera
                   cameraId={cam.id}
                   name={cam.name}
                   backendUrl={BACKEND_URL}
-                  strategy={MOCK_MODE ? MockStream : undefined}
+                  strategy={videoStrategy}
                 />
               </div>
             </div>
-          ))}
+            );
+          })}
         </GridPanel>
       )}
 
