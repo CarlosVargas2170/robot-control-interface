@@ -159,6 +159,24 @@ class SocketService {
     this.socket?.emit("cycle_mode");
   }
 
+  /** Mapeo de modo a comando serial directo que reconoce la STM32 */
+  private readonly MODE_TO_SERIAL: Record<string, string> = {
+    TELEDIRIGIDO: "TELEDI",
+    AUTONOMO: "AUTO",
+    "MANDO RC": "RC",
+  };
+
+  /** Cambia directamente al modo indicado vía comando serial */
+  setMode(mode: string) {
+    const cmd = this.MODE_TO_SERIAL[mode];
+    if (!cmd) {
+      console.warn(`[Socket] Unknown mode: ${mode}`);
+      return;
+    }
+    console.log("[Socket TX] set_mode → serial_command", { command: cmd });
+    this.socket?.emit("serial_command", { command: cmd });
+  }
+
   /** Envía un comando serial directo (con whitelist) */
   sendSerialCommand(command: string) {
     console.log("[Socket TX] serial_command", { command });

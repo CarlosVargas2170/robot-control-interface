@@ -74,11 +74,13 @@ function App() {
     setSpeed,
     canDrive,
     controlError,
+    currentMode,
     updateKey,
     claimControl,
     releaseControl,
     emergencyStop,
     cycleMode,
+    setMode,
   } = useRobotControl(status);
 
   // Integrar teclado con el control del robot
@@ -163,6 +165,8 @@ function App() {
         onClaimControl={claimControl}
         onReleaseControl={releaseControl}
         onEmergencyStop={emergencyStop}
+        currentMode={currentMode}
+        onSetMode={setMode}
       />
 
       <div className="pt-13.5">
@@ -224,6 +228,8 @@ function App() {
           if (!pos) return null;
 
           if (type === "wasdKeys") {
+            // Solo se muestra el teclado virtual en modo TELEDIRIGIDO
+            if (currentMode !== "TELEDIRIGIDO") return null;
             return (
               <OverlayGraph
                 key={type}

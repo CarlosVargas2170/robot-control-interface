@@ -11,6 +11,7 @@ import {
   NavbarCamerasMenu,
   NavbarSettingsMenu,
   NavbarLayoutsMenu,
+  NavbarModeSelect,
   DropdownButton,
 } from "./navbar/index";
 
@@ -34,6 +35,8 @@ export interface NavbarProps {
   onClaimControl?: () => void;
   onReleaseControl?: () => void;
   onEmergencyStop?: () => void;
+  currentMode?: string;
+  onSetMode?: (mode: string) => void;
 }
 
 // ─── NAVBAR ──────────────────────────────────────────────────────────────────
@@ -56,6 +59,8 @@ export function Navbar({
   onClaimControl,
   onReleaseControl,
   onEmergencyStop,
+  currentMode = "DESCONOCIDO",
+  onSetMode,
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -90,19 +95,30 @@ export function Navbar({
 
       {/* ── Right: actions + tool buttons ───────────────────────────────── */}
       <div className="flex items-center gap-1.5">
-        {hasActions && (
-          <>
-            <NavbarActions
-              hasControl={hasControl}
-              onClaimControl={onClaimControl}
-              onReleaseControl={onReleaseControl}
-              onEmergencyStop={onEmergencyStop}
-            />
-            <span className="w-px h-6 bg-[#30363d] mx-0.5" />
-          </>
-        )}
+          {hasActions && (
+            <>
+              <NavbarActions
+                hasControl={hasControl}
+                onClaimControl={onClaimControl}
+                onReleaseControl={onReleaseControl}
+                onEmergencyStop={onEmergencyStop}
+              />
+              <span className="w-px h-6 bg-[#30363d] mx-0.5" />
+            </>
+          )}
 
-        <NavbarCamerasMenu
+          {onSetMode && (
+            <>
+              <NavbarModeSelect
+                currentMode={currentMode}
+                hasControl={hasControl}
+                onSetMode={onSetMode}
+              />
+              <span className="w-px h-6 bg-[#30363d] mx-0.5" />
+            </>
+          )}
+
+          <NavbarCamerasMenu
           cameras={cameras}
           activeCameras={activeCameras}
           onToggleCamera={onToggleCamera}

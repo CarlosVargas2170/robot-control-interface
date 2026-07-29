@@ -17,6 +17,8 @@ export interface UseRobotControlReturn {
   canDrive: boolean;
   /** Mensaje de error/denegación */
   controlError: string | null;
+  /** Modo actual del robot reportado por el backend */
+  currentMode: string;
 
   /** Actualiza el estado de una tecla */
   updateKey: (key: keyof MotionKeys, pressed: boolean) => void;
@@ -30,6 +32,8 @@ export interface UseRobotControlReturn {
   emergencyStop: () => void;
   /** Cambia al siguiente modo */
   cycleMode: () => void;
+  /** Cambia directamente a un modo específico */
+  setMode: (mode: string) => void;
   /** Envía un comando serial directo */
   sendSerialCommand: (command: string) => void;
   /** Limpia todas las teclas */
@@ -172,6 +176,14 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
     }
   }, [clearKeys]);
 
+  const setMode = useCallback((mode: string) => {
+    console.log(`[useRobotControl] Set mode: ${mode}`);
+    clearKeys();
+    if (!MOCK_MODE) {
+      socketService.setMode(mode);
+    }
+  }, [clearKeys]);
+
   const sendSerialCommand = useCallback((command: string) => {
     if (!MOCK_MODE && hasControl) {
       console.log("[useRobotControl] Send serial command:", command);
@@ -197,11 +209,13 @@ export function useRobotControl(status: RobotStatus): UseRobotControlReturn {
     setSpeed,
     canDrive,
     controlError,
+    currentMode: status.robot_mode,
     updateKey,
     claimControl,
     releaseControl,
     emergencyStop,
     cycleMode,
+    setMode,
     sendSerialCommand,
     clearKeys,
   };
