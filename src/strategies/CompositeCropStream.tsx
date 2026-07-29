@@ -9,7 +9,7 @@ import {
 } from "../config/backend";
 import {
   acquireCompositeStream,
-  quadrantRect,
+  gridRect,
 } from "../services/compositeStream";
 
 /**
@@ -40,9 +40,12 @@ export default function CompositeCropStream({
   const rafRef = useRef<number>(0);
 
   const meta = MEDIAMTX_CAMERAS.find((c) => c.id === cameraId);
-  const quadrant =
+  const cols = meta?.cols ?? 2;
+  const rows = meta?.rows ?? 2;
+  const position =
+    meta?.position ??
     meta?.quadrant ??
-    (Number(cameraId.replace("cam_", "")) as 0 | 1 | 2 | 3);
+    Number(cameraId.replace("cam_", ""));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -80,7 +83,7 @@ export default function CompositeCropStream({
       }
 
       if (video && video.readyState >= 2 && video.videoWidth > 0) {
-        const { sx, sy, sw, sh } = quadrantRect(quadrant);
+        const { sx, sy, sw, sh } = gridRect(position, cols, rows);
         const srcW = video.videoWidth;
         const srcH = video.videoHeight;
         ctx.drawImage(
@@ -118,7 +121,7 @@ export default function CompositeCropStream({
       cancelAnimationFrame(rafRef.current);
       release();
     };
-  }, [cameraId, quadrant, onStatusChange]);
+  }, [cameraId, position, cols, rows, onStatusChange]);
 
   return <canvas ref={canvasRef} className={className} />;
 }

@@ -186,16 +186,22 @@ function App() {
       {!loading && visibleCameras.length > 0 && (
         <GridPanel key={gridKey} locked={!editMode}>
           {visibleCameras.map((cam, i) => {
-              // Usar quadrant si existe; si no, fallback al índice
-              const q = cam.quadrant ?? i;
+              // Layout genérico N×M: usa cols/rows/position de la cámara
+              const cols = cam.cols ?? 2;
+              const rows = cam.rows ?? 2;
+              const pos = cam.position ?? cam.quadrant ?? i;
+              const gridCol = pos % cols;
+              const gridRow = Math.floor(pos / cols);
+              const w = 12 / cols;  // GridStack es 12 columnas
+              const h = 12 / rows;
               return (
             <div
               key={cam.id}
               className="grid-stack-item"
-              gs-w="6"
-              gs-h="4"
-              gs-x={(q % 2) * 6}
-              gs-y={Math.floor(q / 2) * 4}
+              gs-w={w}
+              gs-h={h}
+              gs-x={gridCol * w}
+              gs-y={gridRow * h}
             >
               <div className="grid-stack-item-content">
                 <Camera

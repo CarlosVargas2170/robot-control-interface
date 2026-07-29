@@ -115,7 +115,39 @@ export const MOCK_CAMERAS: CameraInfo[] = [
 ];
 
 /**
- * Catálogo de cámaras del composite 2×2 (CAMERA_SOURCE === "mediamtx").
+ * Parsea VITE_CAMERA_LAYOUT (ej: "2x2", "3x3", "1x4").
+ * Si no está definida, devuelve null → se usa el catálogo hardcodeado.
+ */
+function parseLayout(raw: string | undefined): { cols: number; rows: number } | null {
+  if (!raw) return null;
+  const match = raw.trim().match(/^(\d+)x(\d+)$/i);
+  if (!match) return null;
+  const cols = parseInt(match[1], 10);
+  const rows = parseInt(match[2], 10);
+  if (cols < 1 || rows < 1) return null;
+  return { cols, rows };
+}
+
+/** Genera N cámaras para un layout NxM genérico. */
+function generateCameras(cols: number, rows: number): CameraInfo[] {
+  const total = cols * rows;
+  return Array.from({ length: total }, (_, i) => ({
+    id: `cam_${i}`,
+    name: `CAM ${i + 1}`,
+    device: `/dev/video${i}`,
+    streamPath: `cam${i}`,
+    cols,
+    rows,
+    position: i,
+  }));
+}
+
+/**
+ * Catálogo de cámaras para composite-crop (CAMERA_SOURCE === "mediamtx").
+ *
+ * Dos modos:
+ * 1. **VITE_CAMERA_LAYOUT** → genera automáticamente N cámaras (ej: "3x3" = 9)
+ * 2. **Sin variable** → usa el catálogo hardcodeado de abajo (2×2 con nombres)
  *
  * Layout del nvcompositor en la Jetson:
  * ```
@@ -123,37 +155,46 @@ export const MOCK_CAMERAS: CameraInfo[] = [
  *  ─────────┼─────────
  *  cam_2 BL │ cam_3 BR  (monitor)
  * ```
- *
- * Cada widget del grid recorta su `quadrant` del stream único.
- * Editá nombres aquí si querés otras etiquetas en la UI.
  */
-export const MEDIAMTX_CAMERAS: CameraInfo[] = [
-  {
-    id: "cam_0",
-    name: "CAM FRONT",
-    device: "/dev/video0",
-    streamPath: "cam0",
-    quadrant: 0, // superior-izquierda
-  },
-  {
-    id: "cam_1",
-    name: "CAM REAR",
-    device: "/dev/video1",
-    streamPath: "cam1",
-    quadrant: 1, // superior-derecha
-  },
-  {
-    id: "cam_2",
-    name: "CAM WIDE",
-    device: "/dev/video2",
-    streamPath: "cam2",
-    quadrant: 2, // inferior-izquierda
-  },
-  {
-    id: "cam_3",
-    name: "MONITOR",
-    device: "ximagesrc",
-    streamPath: "monitor",
-    quadrant: 3, // inferior-derecha
-  },
-];
+const _layout = parseLayout(import.meta.env.VITE_CAMERA_LAYOUT);
+
+export const MEDIAMTX_CAMERAS: CameraInfo[] = _layout
+  ? generateCameras(_layout.cols, _layout.rows)
+  : [
+      {
+        id: "cam_0",
+        name: "CAM FRONT",
+        device: "/dev/video0",
+        streamPath: "cam0",
+        cols: 2,
+        rows: 2,
+        position: 0,
+      },
+      {
+        id: "cam_1",
+        name: "CAM REAR",
+        device: "/dev/video1",
+        streamPath: "cam1",
+        cols: 2,
+        rows: 2,
+        position: 1,
+      },
+      {
+        id: "cam_2",
+        name: "CAM WIDE",
+        device: "/dev/video2",
+        streamPath: "cam2",
+        cols: 2,
+        rows: 2,
+        position: 2,
+      },
+      {
+        id: "cam_3",
+        name: "MONITOR",
+        device: "ximagesrc",
+        streamPath: "monitor",
+        cols: 2,
+        rows: 2,
+        position: 3,
+      },
+    ];

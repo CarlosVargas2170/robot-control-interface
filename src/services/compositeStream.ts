@@ -122,19 +122,36 @@ export function acquireCompositeStream(
   };
 }
 
-/** Mapeo de cuadrante 0..3 → región normalizada en el frame 2×2 */
+/** Mapeo de posición 0..N-1 → región normalizada en el frame NxM */
+export function gridRect(
+  position: number,
+  cols: number,
+  rows: number,
+): {
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+} {
+  const col = position % cols;
+  const row = Math.floor(position / cols);
+  return {
+    sx: col / cols,
+    sy: row / rows,
+    sw: 1 / cols,
+    sh: 1 / rows,
+  };
+}
+
+/**
+ * @deprecated Usar `gridRect()` para layouts genéricos.
+ * Solo funciona para 2×2.
+ */
 export function quadrantRect(quadrant: number): {
   sx: number;
   sy: number;
   sw: number;
   sh: number;
 } {
-  const col = quadrant % 2;
-  const row = Math.floor(quadrant / 2);
-  return {
-    sx: col * 0.5,
-    sy: row * 0.5,
-    sw: 0.5,
-    sh: 0.5,
-  };
+  return gridRect(quadrant, 2, 2);
 }
