@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { socketService } from "../services/socket";
-import { BACKEND_URL, MOCK_MODE } from "../config/backend";
+import { SOCKET_URL, MOCK_MODE } from "../config/backend";
 import type { RobotStatus } from "../types/robot";
 
 /** Estado mock para desarrollo sin backend */
@@ -69,7 +69,7 @@ export function useSocket(): UseSocketReturn {
     }
     
     // Conectar al backend
-    socketService.connect(BACKEND_URL);
+    socketService.connect(SOCKET_URL);
 
     // Listeners de conexión
     const handleConnect = () => {

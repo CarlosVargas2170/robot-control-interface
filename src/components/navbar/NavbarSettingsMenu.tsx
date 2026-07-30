@@ -18,6 +18,8 @@ interface NavbarSettingsMenuProps {
   onToggleDrivingPanel?: (active: boolean) => void;
   controlType: string;
   onControlTypeChange?: (type: string) => void;
+  /** Token que fuerza el cierre del dropdown (ej. al abrir panel de conducción). */
+  closeToken?: number;
 }
 
 export function NavbarSettingsMenu({
@@ -27,6 +29,7 @@ export function NavbarSettingsMenu({
   onToggleDrivingPanel,
   controlType,
   onControlTypeChange,
+  closeToken,
 }: NavbarSettingsMenuProps) {
   // Fallback local state (cuando onToggleGraph no está cableado)
   const [packetLossLocal, setPacketLoss] = useState(true);
@@ -52,7 +55,7 @@ export function NavbarSettingsMenu({
     isWired ? handleGraphChange(type) : localSet;
 
   return (
-    <DropdownButton icon="fas fa-sliders-h" tooltip="Ajustes">
+    <DropdownButton icon="fas fa-sliders-h" tooltip="Ajustes" closeToken={closeToken}>
       <DropdownCheckbox
         label="Packet loss"
         checked={g("packetLoss", packetLossLocal)}

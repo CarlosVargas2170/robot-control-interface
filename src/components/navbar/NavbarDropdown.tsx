@@ -1,6 +1,6 @@
 // ─── NavbarDropdown — primitivas de dropdown compartidas ────────────────────────
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -10,6 +10,9 @@ interface DropdownButtonProps {
   variant?: "cam";
   onClick?: () => void;
   children?: ReactNode;
+  /** Al cambiar su valor, fuerza el cierre del dropdown. Ideal para cerrar
+   *  el menú cuando un checkbox interno abre un panel (ej. conducción). */
+  closeToken?: number;
 }
 
 interface DropdownSubmenuProps {
@@ -73,9 +76,17 @@ export function DropdownButton({
   variant,
   onClick,
   children,
+  closeToken,
 }: DropdownButtonProps) {
   const [open, setOpen] = useState(false);
   const hasDropdown = !!children;
+
+  // Cerrar el dropdown cuando cambia closeToken (ej. al abrir panel de conducción)
+  useEffect(() => {
+    if (closeToken !== undefined && closeToken > 0) {
+      setOpen(false);
+    }
+  }, [closeToken]);
 
   const btn = (
     <button

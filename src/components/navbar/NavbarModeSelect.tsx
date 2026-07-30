@@ -44,7 +44,7 @@ export function NavbarModeSelect({ currentMode, hasControl, onSetMode }: NavbarM
         disabled={!hasControl}
         className={[
           "text-xs font-semibold rounded px-2 py-1.5 border outline-none appearance-none cursor-pointer",
-          "transition-colors duration-150 min-w-[120px]",
+          "transition-colors duration-150 min-w-30",
           hasControl
             ? "bg-[#1c2333] border-[#30363d] text-[#c9d1d9] hover:border-[#58a6ff] focus:border-[#58a6ff]"
             : "bg-[#0d1117] border-[#30363d] text-[#484f58] cursor-not-allowed opacity-60",

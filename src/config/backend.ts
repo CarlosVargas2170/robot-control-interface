@@ -7,8 +7,17 @@ import type { CameraInfo } from "../types/camera";
  *
  * Se puede configurar con la variable de entorno VITE_BACKEND_URL
  */
-export const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+export const BACKEND_URL = "http://127.0.0.1:5000";
+// export const BACKEND_URL =
+//   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+/**
+ * URL para Socket.IO.
+ * Si está vacía, usa el mismo origen (proxy de Vite en desarrollo).
+ * Si se define, conecta directamente a esa URL.
+ */
+// export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "";
+export const SOCKET_URL = "http://127.0.0.1:5000";
 
 /**
  * Normaliza VITE_MEDIAMTX_URL.
@@ -130,7 +139,7 @@ function parseLayout(raw: string | undefined): { cols: number; rows: number } | 
 
 /** Genera N cámaras para un layout NxM genérico. */
 function generateCameras(cols: number, rows: number): CameraInfo[] {
-  const total = cols * rows;
+  const total = cols * rows;  
   return Array.from({ length: total }, (_, i) => ({
     id: `cam_${i}`,
     name: `CAM ${i + 1}`,
