@@ -1,7 +1,7 @@
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 // Barra de navegación superior fija y responsiva
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { CameraInfo } from "../types/camera";
 import type { GraphType } from "../types/graph";
 import type { RobotStatus } from "../types/robot";
@@ -63,6 +63,16 @@ export function Navbar({
   onSetMode,
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsCloseToken, setSettingsCloseToken] = useState(0);
+
+  // Al abrir el panel de conducción, cierra el dropdown de Ajustes automáticamente
+  const prevDrivingPanel = useRef(drivingPanel);
+  useEffect(() => {
+    if (drivingPanel && !prevDrivingPanel.current) {
+      setSettingsCloseToken((t) => t + 1);
+    }
+    prevDrivingPanel.current = drivingPanel;
+  }, [drivingPanel]);
 
   const hasActions = !!(onClaimControl || onReleaseControl || onEmergencyStop);
 
@@ -119,27 +129,28 @@ export function Navbar({
           )}
 
           <NavbarCamerasMenu
-          cameras={cameras}
-          activeCameras={activeCameras}
-          onToggleCamera={onToggleCamera}
-        />
+            cameras={cameras}
+            activeCameras={activeCameras}
+            onToggleCamera={onToggleCamera}
+          />
 
-        <NavbarSettingsMenu
-          visibleGraphs={visibleGraphs}
-          onToggleGraph={onToggleGraph}
-          drivingPanel={drivingPanel}
-          onToggleDrivingPanel={onToggleDrivingPanel}
-          controlType={controlType}
-          onControlTypeChange={onControlTypeChange}
-        />
+          <NavbarSettingsMenu
+            visibleGraphs={visibleGraphs}
+            onToggleGraph={onToggleGraph}
+            drivingPanel={drivingPanel}
+            onToggleDrivingPanel={onToggleDrivingPanel}
+            controlType={controlType}
+            onControlTypeChange={onControlTypeChange}
+            closeToken={settingsCloseToken}
+          />
 
-        <DropdownButton
-          icon={editMode ? "fas fa-unlock" : "fas fa-lock"}
-          tooltip={editMode ? "Bloquear" : "Edición"}
-          onClick={() => onToggleEditMode?.()}
-        />
+          <DropdownButton
+            icon={editMode ? "fas fa-unlock" : "fas fa-lock"}
+            tooltip={editMode ? "Bloquear" : "Edición"}
+            onClick={() => onToggleEditMode?.()}
+          />
 
-        <NavbarLayoutsMenu />
+          <NavbarLayoutsMenu />
       </div>
 
       {/* ── Mobile menu ──────────────────────────────────────────────────── */}

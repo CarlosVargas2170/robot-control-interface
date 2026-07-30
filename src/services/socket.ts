@@ -8,11 +8,13 @@ class SocketService {
   private socket: Socket<BackendEvents, FrontendEvents> | null = null;
   private listeners: Map<string, Set<(...args: any[]) => void>> = new Map();
 
-  /** Conecta al backend. Seguro llamar múltiples veces. */
+  /** Conecta al backend. Seguro llamar múltiples veces.
+   *  @param url Vacío = mismo origen (usa proxy de Vite). Con URL = conexión directa. */
   connect(url: string) {
     if (this.socket?.connected) return;
 
-    console.log("[Socket] Connecting to:", url);
+    const target = url || window.location.origin;
+    console.log("[Socket] Connecting to:", target);
 
     // Desconectar socket anterior si existe
     if (this.socket) {
@@ -21,8 +23,8 @@ class SocketService {
       this.socket.disconnect();
     }
 
-    this.socket = io(url, {
-      transports: ["websocket", "polling"],
+    this.socket = io(url || undefined, {
+      transports: ["polling"],  // Solo polling (Flask-SocketIO con threading no soporta WS)
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: Infinity,

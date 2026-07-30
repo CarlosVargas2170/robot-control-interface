@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import GridPanel from "./components/gridPanel/GridPanel";
 import Camera from "./components/Camera";
 import OverlayGraph from "./components/OverlayGraph";
@@ -66,7 +66,7 @@ function App() {
   const { cameras, loading } = useCameras(BACKEND_URL);
   
   // Hooks de comunicación con el backend (no agregan UI)
-  const { isConnected, status } = useSocket();
+  const { isConnected, status, serialLog, clearLog } = useSocket();
   const {
     hasControl,
     keys,
@@ -81,6 +81,7 @@ function App() {
     emergencyStop,
     cycleMode,
     setMode,
+    sendSerialCommand,
   } = useRobotControl(status);
 
   // Integrar teclado con el control del robot
@@ -104,6 +105,40 @@ function App() {
   const [editMode, setEditMode] = useState(false);
   const [drivingPanel, setDrivingPanel] = useState(false);
   const [controlType, setControlType] = useState("teclado");
+  const [popoutMode, setPopoutMode] = useState(false);
+  const popupRef = useRef<Window | null>(null);
+
+  // ── Popout: detectar si esta instancia es la ventana emergente ────────────
+  const searchParams = new URLSearchParams(window.location.search);
+  const isPopout = searchParams.get("popout") === "driving";
+  const popoutControlType = searchParams.get("controlType") || "teclado";
+
+  // Si es popup, usar el controlType de la URL
+  const effectiveControlType = isPopout ? popoutControlType : controlType;
+
+  // ── Abrir panel en ventana emergente ──────────────────────────────────────
+  const handlePopOut = useCallback(() => {
+    setPopoutMode(true);
+    setDrivingPanel(false);
+    const popup = window.open(
+      `/?popout=driving&controlType=${controlType}`,
+      "serbot-drive",
+      `width=500,height=${window.innerHeight},left=${window.screen.width - 520}`
+    );
+    popupRef.current = popup;
+  }, [controlType]);
+
+  // ── Detectar cierre de ventana emergente ──────────────────────────────────
+  useEffect(() => {
+    if (!popoutMode) return;
+    const interval = setInterval(() => {
+      if (popupRef.current?.closed) {
+        setPopoutMode(false);
+        popupRef.current = null;
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [popoutMode]);
 
   useEffect(() => {
     if (cameras.length > 0 && activeCameras.length === 0) {
@@ -143,6 +178,33 @@ function App() {
 
   const visibleCameras = cameras.filter((c) => activeCameras.includes(c.id));
   const gridKey = visibleCameras.map((c) => c.id).join("|");
+
+  // ── Popup: render mínimo (solo SidePanel full-screen, sin Navbar ni Grid) ────
+  if (isPopout) {
+    return (
+      <div className="h-screen w-screen bg-[#0d1117] overflow-hidden">
+        <SidePanel
+          isPopout
+          controlType={effectiveControlType as "teclado" | "volante" | "mando"}
+          status={status}
+          isConnected={isConnected}
+          hasControl={hasControl}
+          canDrive={canDrive}
+          speed={speed}
+          controlError={controlError}
+          serialLog={serialLog}
+          onSpeedChange={setSpeed}
+          onClaimControl={claimControl}
+          onReleaseControl={releaseControl}
+          onEmergencyStop={emergencyStop}
+          onCycleMode={cycleMode}
+          onClearLog={clearLog}
+          onSendSerialCommand={sendSerialCommand}
+          onClose={() => window.close()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`relative h-screen w-screen overflow-y-auto bg-[#0d1117] transition-all duration-300 ${drivingPanel ? "pr-120" : ""}`}>
@@ -247,7 +309,7 @@ function App() {
         })}
 
       {/* ── Side Panel (panel lateral fijo) ─────────────────────────────── */}
-      {drivingPanel && (
+      {drivingPanel && !popoutMode && (
         <SidePanel
           controlType={controlType as "teclado" | "volante" | "mando"}
           status={status}
@@ -256,12 +318,16 @@ function App() {
           canDrive={canDrive}
           speed={speed}
           controlError={controlError}
+          serialLog={serialLog}
           onSpeedChange={setSpeed}
           onClaimControl={claimControl}
           onReleaseControl={releaseControl}
           onEmergencyStop={emergencyStop}
           onCycleMode={cycleMode}
+          onClearLog={clearLog}
+          onSendSerialCommand={sendSerialCommand}
           onClose={() => setDrivingPanel(false)}
+          onPopOut={handlePopOut}
         />
       )}
       </div>{/* ── cierra pt-12 ────────────────────────────────────────────────── */}

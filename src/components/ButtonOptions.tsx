@@ -1,6 +1,6 @@
 // ─── ButtonOptions — floating overlay toolbar ─────────────────────────────────
 
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { CameraInfo } from "../types/camera";
 import type { GraphType } from "../types/graph";
 
@@ -37,6 +37,8 @@ interface ButtonOptionProps {
   variant?: "cam";
   onClick?: () => void;
   children?: ReactNode;
+  /** Al cambiar, fuerza el cierre del dropdown. */
+  closeToken?: number;
 }
 
 interface DropdownSubmenuProps {
@@ -85,9 +87,17 @@ function ButtonOption({
   variant,
   onClick,
   children,
+  closeToken,
 }: ButtonOptionProps) {
   const [open, setOpen] = useState(false);
   const hasDropdown = !!children;
+
+  // Cerrar el dropdown cuando cambia closeToken
+  useEffect(() => {
+    if (closeToken !== undefined && closeToken > 0) {
+      setOpen(false);
+    }
+  }, [closeToken]);
 
   const btn = (
     <button
@@ -247,6 +257,16 @@ export default function ButtonOptions({
   controlType = "teclado",
   onControlTypeChange,
 }: ButtonOptionsProps) {
+  // ── Cerrar dropdown Ajustes al abrir el panel de conducción ────────────────
+  const [settingsCloseToken, setSettingsCloseToken] = useState(0);
+  const prevDrivingPanel = useRef(drivingPanel);
+  useEffect(() => {
+    if (drivingPanel && !prevDrivingPanel.current) {
+      setSettingsCloseToken((t) => t + 1);
+    }
+    prevDrivingPanel.current = drivingPanel;
+  }, [drivingPanel]);
+
   // ── Helper: is a graph visible? ─────────────────────────────────────────────
   const isGraphVisible = (type: GraphType) => visibleGraphs.has(type);
   const handleGraphChange = useCallback(
@@ -305,7 +325,7 @@ export default function ButtonOptions({
       <Divider />
 
       {/* ── AJUSTES ── */}
-      <ButtonOption icon="fas fa-sliders-h" tooltip="Ajustes">
+      <ButtonOption icon="fas fa-sliders-h" tooltip="Ajustes" closeToken={settingsCloseToken}>
         <DropdownCheckbox
           label="Packet loss"
           checked={g("packetLoss", packetLossLocal)}

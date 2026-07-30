@@ -48,7 +48,7 @@ export function SteeringWheelPanel({
   return (
     <div className="space-y-4">
       {/* ═══ INDICADORES DE ESTADO ═══ */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <StatusItem label="Mando" value="Sin mando" connected={false} />
         <StatusItem label="STM32" value="Conectada" connected={isConnected} />
         <StatusItem label="Canal" value="Active" connected={isConnected} />
@@ -221,7 +221,7 @@ export function SteeringWheelPanel({
         <span className="dp-eyebrow">AUXILIARES STM32</span>
         <h2 className="text-[17px] font-semibold text-white mt-1 mb-3">Luces, guiñadores y puerta</h2>
         
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5">
           <AuxButton
             active={auxState.luzFrontal}
             onClick={() => toggleAux("luzFrontal")}
