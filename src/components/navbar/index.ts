@@ -1,6 +1,6 @@
 // ─── Navbar barrel export ─────────────────────────────────────────────────────
 
-export { DropdownButton, DropdownCheckbox, DropdownRadio, DropdownSubmenu, DropdownDivider } from "./NavbarDropdown";
+export { DropdownButton, DropdownCheckbox, DropdownLink, DropdownRadio, DropdownSubmenu, DropdownDivider } from "./NavbarDropdown";
 export { NavbarStatusPills } from "./NavbarStatusPills";
 export { NavbarActions } from "./NavbarActions";
 export { NavbarModeSelect } from "./NavbarModeSelect";
