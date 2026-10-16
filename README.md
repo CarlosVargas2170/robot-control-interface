@@ -1,75 +1,61 @@
-# React + TypeScript + Vite
+# SerBot Control
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interfaz web para supervisar cámaras y conducir robots SerBot. Incluye un panel
+independiente para operar las funciones de atención del Robot Mesero.
 
-Currently, two official plugins are available:
+## Desarrollo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Comandos disponibles:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `npm run build`: valida TypeScript y genera la aplicación de producción.
+- `npm run lint`: ejecuta ESLint.
+- `npm run preview`: sirve localmente el resultado de `dist`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Copia `.env.example` como `.env` y ajusta las URLs del backend, Socket.IO y
+MediaMTX para el entorno de ejecución.
 
-```
+## Vistas
+
+- `/`: dashboard de cámaras, telemetría y conducción.
+- `/?popout=driving`: panel de conducción independiente existente.
+- `/?app=mesero`: panel de acciones del Robot Mesero.
+
+El panel Mesero también se abre desde **Ajustes → Aplicaciones → Mesero Robot**.
+El enlace usa una pestaña nueva y la vista se selecciona antes de montar el
+dashboard, por lo que esa pestaña no inicia cámaras ni el socket de conducción.
+
+## Panel Robot Mesero
+
+El panel permite seleccionar Mesero 1–4 o un servidor local y operar:
+
+- expresiones y pantalla de producto;
+- pago QR, estado de polling y contador de ventas;
+- mensajes y audios locales/remotos;
+- texto a voz (TTS);
+- configuración, merchants y filtros de productos;
+- consola de resultados.
+
+Los servicios del panel Mesero son independientes del backend de conducción:
+la API del robot usa el puerto `5050` y TTS usa el puerto `9000`. Los servidores
+deben aceptar CORS desde el origen de esta interfaz. Si la interfaz se publica
+por HTTPS, esos servicios también deben exponerse por HTTPS o mediante un proxy
+seguro para evitar bloqueos por contenido mixto.
+
+Los audios del panel se distribuyen desde
+`public/apps/mesero-control/audio`. El token TTS no se guarda en el código; puede
+definirse con `VITE_MESERO_TTS_TOKEN` o introducirse para la sesión en el panel.
+
+## Seguridad operativa
+
+La API actual del Robot Mesero no autentica los comandos y permite CORS desde
+cualquier origen. Úsala únicamente dentro de una VPN o red confiable; no
+publiques los puertos `5050` y `9000` directamente en Internet. Antes de una
+exposición pública, el backend debe incorporar autenticación y una lista de
+orígenes permitidos. Además, `GET /config` puede devolver el bearer token de la
+API comercial, por lo que el acceso de red al servicio debe considerarse
+privilegiado.

@@ -1,0 +1,14 @@
+/*
+ * GridPanel — Full-screen gridstack container
+ *
+ * Ensures the grid spans the entire viewport so that
+ * GridStack can calculate column widths and row heights
+ * based on the full window dimensions.
+ */
+
+.grid-stack {
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background: #0d1117;
+}
