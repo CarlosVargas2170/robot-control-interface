@@ -1,7 +1,8 @@
 // ─── ButtonOptions — floating overlay toolbar ─────────────────────────────────
 
-import { useState, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { CameraInfo } from "../types/camera";
+import type { GraphType } from "../types/graph";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,22 @@ interface ButtonOptionsProps {
   activeCameras: string[];
   /** Called when a camera checkbox is toggled */
   onToggleCamera?: (cameraId: string, active: boolean) => void;
+  /** Which graph widgets are visible */
+  visibleGraphs?: Set<GraphType>;
+  /** Called when a graph checkbox is toggled */
+  onToggleGraph?: (type: GraphType, active: boolean) => void;
+  /** Whether edit mode (drag/resize enabled) is active */
+  editMode?: boolean;
+  /** Called when the edit mode button is clicked */
+  onToggleEditMode?: () => void;
+  /** Whether the driving panel is visible */
+  drivingPanel?: boolean;
+  /** Called when the driving panel checkbox is toggled */
+  onToggleDrivingPanel?: (active: boolean) => void;
+  /** Current control type (teclado/volante/mando) */
+  controlType?: string;
+  /** Called when control type changes */
+  onControlTypeChange?: (type: string) => void;
 }
 
 interface ButtonOptionProps {
@@ -20,6 +37,8 @@ interface ButtonOptionProps {
   variant?: "cam";
   onClick?: () => void;
   children?: ReactNode;
+  /** Al cambiar, fuerza el cierre del dropdown. */
+  closeToken?: number;
 }
 
 interface DropdownSubmenuProps {
@@ -68,9 +87,17 @@ function ButtonOption({
   variant,
   onClick,
   children,
+  closeToken,
 }: ButtonOptionProps) {
   const [open, setOpen] = useState(false);
   const hasDropdown = !!children;
+
+  // Cerrar el dropdown cuando cambia closeToken
+  useEffect(() => {
+    if (closeToken !== undefined && closeToken > 0) {
+      setOpen(false);
+    }
+  }, [closeToken]);
 
   const btn = (
     <button
@@ -221,18 +248,49 @@ export default function ButtonOptions({
   cameras,
   activeCameras,
   onToggleCamera,
+  visibleGraphs = new Set(),
+  onToggleGraph,
+  editMode = false,
+  onToggleEditMode,
+  drivingPanel = false,
+  onToggleDrivingPanel,
+  controlType = "teclado",
+  onControlTypeChange,
 }: ButtonOptionsProps) {
-  // ── Internal settings state ──
-  const [packetLoss, setPacketLoss] = useState(true);
-  const [aceleracion, setAceleracion] = useState(false);
-  const [gps, setGps] = useState(false);
-  const [lidar, setLidar] = useState(false);
-  const [radarFrontal, setRadarFrontal] = useState(false);
-  const [fusionLidarRadar, setFusionLidarRadar] = useState(false);
-  const [frenoMano, setFrenoMano] = useState(false);
-  const [drivingPanel, setDrivingPanel] = useState(false);
+  // ── Cerrar dropdown Ajustes al abrir el panel de conducción ────────────────
+  const [settingsCloseToken, setSettingsCloseToken] = useState(0);
+  const prevDrivingPanel = useRef(drivingPanel);
+  useEffect(() => {
+    if (drivingPanel && !prevDrivingPanel.current) {
+      setSettingsCloseToken((t) => t + 1);
+    }
+    prevDrivingPanel.current = drivingPanel;
+  }, [drivingPanel]);
+
+  // ── Helper: is a graph visible? ─────────────────────────────────────────────
+  const isGraphVisible = (type: GraphType) => visibleGraphs.has(type);
+  const handleGraphChange = useCallback(
+    (type: GraphType) => (active: boolean) => onToggleGraph?.(type, active),
+    [onToggleGraph],
+  );
+
+  // ── Fallback local state (used when onToggleGraph is not wired yet) ──────────
+  const [packetLossLocal, setPacketLoss] = useState(true);
+  const [aceleracionLocal, setAceleracion] = useState(false);
+  const [gpsLocal, setGps] = useState(false);
+  const [lidarLocal, setLidar] = useState(false);
+  const [radarFrontalLocal, setRadarFrontal] = useState(false);
+  const [fusionLidarRadarLocal, setFusionLidarRadar] = useState(false);
+  const [frenoManoLocal, setFrenoMano] = useState(false);
+  const [wasdKeysLocal, setWasdKeys] = useState(true);
   const [controlMaster, setControlMaster] = useState(false);
-  const [controlType, setControlType] = useState("teclado");
+
+  // ── Use visibleGraphs when onToggleGraph is provided, else local fallback ───
+  const isWired = !!onToggleGraph;
+  const g = (type: GraphType, local: boolean) =>
+    isWired ? isGraphVisible(type) : local;
+  const h = (type: GraphType, localSet: (v: boolean) => void) =>
+    isWired ? handleGraphChange(type) : localSet;
 
   // ── Camera-aware helpers ──
   const isCameraActive = (id: string) => activeCameras.includes(id);
@@ -267,42 +325,51 @@ export default function ButtonOptions({
       <Divider />
 
       {/* ── AJUSTES ── */}
-      <ButtonOption icon="fas fa-sliders-h" tooltip="Ajustes">
+      <ButtonOption icon="fas fa-sliders-h" tooltip="Ajustes" closeToken={settingsCloseToken}>
         <DropdownCheckbox
           label="Packet loss"
-          checked={packetLoss}
-          onChange={setPacketLoss}
+          checked={g("packetLoss", packetLossLocal)}
+          onChange={h("packetLoss", setPacketLoss)}
         />
         <DropdownCheckbox
           label="Aceleración"
-          checked={aceleracion}
-          onChange={setAceleracion}
+          checked={g("accel", aceleracionLocal)}
+          onChange={h("accel", setAceleracion)}
         />
-        <DropdownCheckbox label="GPS" checked={gps} onChange={setGps} />
+        <DropdownCheckbox
+          label="GPS"
+          checked={g("gps", gpsLocal)}
+          onChange={h("gps", setGps)}
+        />
         <DropdownCheckbox
           label="LiDAR"
-          checked={lidar}
-          onChange={setLidar}
+          checked={g("lidar", lidarLocal)}
+          onChange={h("lidar", setLidar)}
         />
         <DropdownCheckbox
           label="Radar frontal"
-          checked={radarFrontal}
-          onChange={setRadarFrontal}
+          checked={g("radarFront", radarFrontalLocal)}
+          onChange={h("radarFront", setRadarFrontal)}
         />
         <DropdownCheckbox
           label="Fusión LIDAR+Radar"
-          checked={fusionLidarRadar}
-          onChange={setFusionLidarRadar}
+          checked={g("lidarFusion", fusionLidarRadarLocal)}
+          onChange={h("lidarFusion", setFusionLidarRadar)}
         />
         <DropdownCheckbox
           label="Freno de mano"
-          checked={frenoMano}
-          onChange={setFrenoMano}
+          checked={g("handbrake", frenoManoLocal)}
+          onChange={h("handbrake", setFrenoMano)}
+        />
+        <DropdownCheckbox
+          label="Teclas WASD"
+          checked={g("wasdKeys", wasdKeysLocal)}
+          onChange={h("wasdKeys", setWasdKeys)}
         />
         <DropdownCheckbox
           label="Panel de conducción"
           checked={drivingPanel}
-          onChange={setDrivingPanel}
+          onChange={(v) => onToggleDrivingPanel?.(v)}
         />
 
         <DropdownDivider />
@@ -321,7 +388,7 @@ export default function ButtonOptions({
             name="controlType"
             checked={controlType === "teclado"}
             disabled={!controlMaster}
-            onChange={setControlType}
+            onChange={(v) => onControlTypeChange?.(v)}
             showConfig
           />
           <DropdownRadio
@@ -330,7 +397,7 @@ export default function ButtonOptions({
             name="controlType"
             checked={controlType === "volante"}
             disabled={!controlMaster}
-            onChange={setControlType}
+            onChange={(v) => onControlTypeChange?.(v)}
             showConfig
           />
           <DropdownRadio
@@ -339,7 +406,7 @@ export default function ButtonOptions({
             name="controlType"
             checked={controlType === "mando"}
             disabled={!controlMaster}
-            onChange={setControlType}
+            onChange={(v) => onControlTypeChange?.(v)}
             showConfig
           />
         </DropdownSubmenu>
@@ -358,11 +425,9 @@ export default function ButtonOptions({
 
       {/* ── MODO EDICIÓN ── */}
       <ButtonOption
-        icon="fas fa-lock"
-        tooltip="Edición"
-        onClick={() => {
-          console.log("Edit mode toggled");
-        }}
+        icon={editMode ? "fas fa-unlock" : "fas fa-lock"}
+        tooltip={editMode ? "Bloquear" : "Edición"}
+        onClick={() => onToggleEditMode?.()}
       />
 
       <Divider />

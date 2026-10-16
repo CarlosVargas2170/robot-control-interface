@@ -13,6 +13,8 @@ export interface GridPanelProps {
   onGridReady?: (grid: GridStack) => void;
   /** Extra CSS classes appended to the container. */
   className?: string;
+  /** When true, disables drag & resize for all widgets in the grid */
+  locked?: boolean;
 }
 
 const DEFAULT_OPTIONS: GridStackOptions = {
@@ -34,6 +36,7 @@ export default function GridPanel({
   children,
   onGridReady,
   className = "",
+  locked = false,
 }: GridPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<GridStack | null>(null);
@@ -59,6 +62,11 @@ export default function GridPanel({
     // treated as initial values to avoid re-initialising the grid.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Edit mode: enable/disable drag & resize ──
+  useEffect(() => {
+    gridRef.current?.setStatic(locked);
+  }, [locked]);
 
   return (
     <div
