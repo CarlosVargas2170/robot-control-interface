@@ -1,6 +1,6 @@
 // ─── NavbarDropdown — primitivas de dropdown compartidas ────────────────────────
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,14 @@ interface DropdownCheckboxProps {
   onChange: (v: boolean) => void;
 }
 
+interface DropdownLinkProps {
+  label: string;
+  href: string;
+  icon?: string;
+  target?: string;
+  rel?: string;
+}
+
 interface DropdownRadioProps {
   label: string;
   value: string;
@@ -41,14 +49,19 @@ interface DropdownRadioProps {
 
 export function DropdownSubmenu({ icon, label, children }: DropdownSubmenuProps) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
   return (
     <div>
-      <div
+      <button
+        type="button"
+        aria-controls={panelId}
+        aria-expanded={open}
         className={[
-          "flex cursor-pointer items-center gap-2.5 px-5 py-2.5",
+          "flex w-full cursor-pointer items-center gap-2.5 border-0 bg-transparent px-5 py-2.5 text-left",
           "text-sm text-[#c9d1d9] select-none",
           "transition-colors duration-150",
           "hover:bg-[#58a6ff]/8",
+          "focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#58a6ff]",
         ].join(" ")}
         onClick={() => setOpen((prev) => !prev)}
       >
@@ -62,8 +75,8 @@ export function DropdownSubmenu({ icon, label, children }: DropdownSubmenuProps)
         >
           <i className="fas fa-chevron-right" />
         </span>
-      </div>
-      {open && <div>{children}</div>}
+      </button>
+      {open && <div id={panelId}>{children}</div>}
     </div>
   );
 }
@@ -78,15 +91,10 @@ export function DropdownButton({
   children,
   closeToken,
 }: DropdownButtonProps) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState({ open: false, closeToken });
   const hasDropdown = !!children;
-
-  // Cerrar el dropdown cuando cambia closeToken (ej. al abrir panel de conducción)
-  useEffect(() => {
-    if (closeToken !== undefined && closeToken > 0) {
-      setOpen(false);
-    }
-  }, [closeToken]);
+  // Un token nuevo invalida el estado abierto sin provocar un render extra.
+  const open = openState.closeToken === closeToken && openState.open;
 
   const btn = (
     <button
@@ -104,7 +112,7 @@ export function DropdownButton({
         .filter(Boolean)
         .join(" ")}
       onClick={() => {
-        if (hasDropdown) setOpen((prev) => !prev);
+        if (hasDropdown) setOpenState({ open: !open, closeToken });
         onClick?.();
       }}
     >
@@ -153,6 +161,42 @@ export function DropdownCheckbox({ label, checked, onChange }: DropdownCheckboxP
       />
       <span className="flex-1">{label}</span>
     </label>
+  );
+}
+
+// ─── DROPDOWN LINK ──────────────────────────────────────────────────────────
+
+export function DropdownLink({
+  label,
+  href,
+  icon = "fas fa-external-link-alt",
+  target,
+  rel,
+}: DropdownLinkProps) {
+  const opensNewTab = target === "_blank";
+
+  return (
+    <a
+      href={href}
+      target={target}
+      rel={rel}
+      aria-label={opensNewTab ? `${label} (abre en una pestaña nueva)` : label}
+      className={[
+        "flex cursor-pointer items-center gap-2.5 px-5 py-2.5",
+        "text-sm text-[#c9d1d9] no-underline select-none",
+        "transition-colors duration-150 hover:bg-[#58a6ff]/8",
+        "focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#58a6ff]",
+      ].join(" ")}
+    >
+      <i className={`${icon} h-3.75 w-3.75 shrink-0 text-[#58a6ff]`} aria-hidden="true" />
+      <span className="flex-1">{label}</span>
+      {opensNewTab && (
+        <i
+          className="fas fa-arrow-up-right-from-square text-[10px] text-[#8b949e]"
+          aria-hidden="true"
+        />
+      )}
+    </a>
   );
 }
 

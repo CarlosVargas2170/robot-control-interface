@@ -2,10 +2,12 @@
 // Dropdown de ajustes: gráficos, controles, aplicaciones
 
 import { useState, useCallback } from "react";
+import { getMeseroControlUrl } from "../../config/routes";
 import type { GraphType } from "../../types/graph";
 import {
   DropdownButton,
   DropdownCheckbox,
+  DropdownLink,
   DropdownRadio,
   DropdownSubmenu,
   DropdownDivider,
@@ -141,7 +143,12 @@ export function NavbarSettingsMenu({
       </DropdownSubmenu>
 
       <DropdownSubmenu icon="fas fa-th-large" label="Aplicaciones">
-        <DropdownCheckbox label="Mesero Robot" checked={false} onChange={() => {}} />
+        <DropdownLink
+          label="Mesero Robot"
+          href={getMeseroControlUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+        />
       </DropdownSubmenu>
     </DropdownButton>
   );
